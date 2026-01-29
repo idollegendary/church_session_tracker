@@ -27,7 +27,9 @@ export default function LoginPage() {
       // cookie is set by server (httpOnly)
       // notify header and other components to refresh admin state
       window.dispatchEvent(new CustomEvent('admin:login'));
-      router.push('/timer');
+      // use a full navigation to ensure the browser sends the newly-set httpOnly cookie
+      // (some SPA navigations may not include cookies consistently across environments)
+      window.location.assign('/timer');
     } catch (err: any) {
       alert(err?.message ?? String(err));
     } finally {
