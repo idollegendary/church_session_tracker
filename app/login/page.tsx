@@ -1,0 +1,50 @@
+"use client";
+
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+
+export default function LoginPage() {
+  const router = useRouter();
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  async function handleSignIn() {
+    if (!username || !password) return alert('Username and password required');
+    setLoading(true);
+    try {
+      const res = await fetch('/api/admins/login', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password })
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        alert(json?.error || 'Invalid credentials');
+        return;
+      }
+      // cookie is set by server (httpOnly)
+      // notify header and other components to refresh admin state
+      window.dispatchEvent(new CustomEvent('admin:login'));
+      router.push('/timer');
+    } catch (err: any) {
+      alert(err?.message ?? String(err));
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <div className="max-w-md mx-auto card-vhs p-6 rounded-lg mt-8">
+      <h2 className="text-xl font-semibold mb-4 vhs-heading">Login</h2>
+      <input className="bg-transparent border border-white/10 text-white p-2 rounded w-full mb-2" value={username} onChange={(e) => setUsername(e.target.value)} placeholder="username" />
+      <input type="password" className="bg-transparent border border-white/10 text-white p-2 rounded w-full mb-4" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="password" />
+      <div className="flex gap-2">
+        <button className="btn btn-primary" onClick={handleSignIn} disabled={loading}>
+          {loading ? 'Signing in...' : 'Sign in'}
+        </button>
+      </div>
+    </div>
+  );
+}
