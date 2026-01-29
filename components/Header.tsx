@@ -22,11 +22,19 @@ export default function Header() {
     }
     fetchAdmin();
 
-    const onLogin = () => fetchAdmin();
+    const onLogin = (e?: any) => {
+      // If login event provides admin detail, use it immediately, otherwise refetch.
+      const maybeAdmin = e?.detail?.admin;
+      if (maybeAdmin) {
+        setAdmin(maybeAdmin);
+        return;
+      }
+      fetchAdmin();
+    };
     const onLogout = () => setAdmin(null);
-    window.addEventListener('admin:login', onLogin);
-    window.addEventListener('admin:logout', onLogout);
-    return () => { mounted = false; window.removeEventListener('admin:login', onLogin); window.removeEventListener('admin:logout', onLogout); };
+    window.addEventListener('admin:login', onLogin as EventListener);
+    window.addEventListener('admin:logout', onLogout as EventListener);
+    return () => { mounted = false; window.removeEventListener('admin:login', onLogin as EventListener); window.removeEventListener('admin:logout', onLogout as EventListener); };
   }, []);
 
   return (

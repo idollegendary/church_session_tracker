@@ -25,10 +25,15 @@ export default function LoginPage() {
         return;
       }
       // cookie is set by server (httpOnly)
-      // notify header and other components to refresh admin state
+      // If server returned admin profile in body, dispatch it so header can update immediately.
+      if (json?.admin) {
+        window.dispatchEvent(new CustomEvent('admin:login', { detail: { admin: json.admin } }));
+        window.location.assign('/profile');
+        return;
+      }
+
+      // Fallback: notify header to refresh and poll /api/admins/me a few times to ensure cookie is available.
       window.dispatchEvent(new CustomEvent('admin:login'));
-      // Poll /api/admins/me a few times to ensure the cookie is available to subsequent requests,
-      // then navigate to the profile page so the user sees their profile immediately.
       async function waitForAdmin() {
         for (let i = 0; i < 3; i++) {
           try {
