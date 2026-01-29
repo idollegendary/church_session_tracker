@@ -15,5 +15,20 @@
         { "key": "Surrogate-Control", "value": "no-store" }
       ]
     }
+    ,
+    {
+      "source": "/profile*",
+      "headers": [
+        { "key": "Cache-Control", "value": "no-store, max-age=0, s-maxage=0, must-revalidate" },
+        { "key": "Surrogate-Control", "value": "no-store" }
+      ]
+    },
+    {
+      "source": "/profile.rsc",
+      "headers": [
+        { "key": "Cache-Control", "value": "no-store, max-age=0, s-maxage=0, must-revalidate" },
+        { "key": "Surrogate-Control", "value": "no-store" }
+      ]
+    }
   ]
 }
