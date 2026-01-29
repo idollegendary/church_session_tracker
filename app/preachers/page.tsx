@@ -117,9 +117,9 @@ export default function PreachersPage() {
                 ) : (
                   <div className="w-16 h-16 rounded-md bg-white/6 flex items-center justify-center text-lg font-semibold">{getInitials(modalPreacher?.name ?? name ?? '?') ?? '?'}</div>
                 )}
-                <input className="bg-transparent border border-white/10 text-white p-2 rounded flex-1" value={modalPreacher?.name ?? name} onChange={(e) => setModalPreacher(prev => ({ ...(prev ?? {}), name: e.target.value }))} placeholder="Name" />
+                <input className="bg-transparent border border-white/10 text-white p-2 rounded flex-1" value={modalPreacher?.name ?? name} onChange={(e) => setModalPreacher((prev: any) => ({ ...(prev ?? {}), name: e.target.value }))} placeholder="Name" />
               </div>
-              <input className="bg-transparent border border-white/10 text-white p-2 rounded" value={modalPreacher?.avatar_url ?? ''} onChange={(e) => setModalPreacher(prev => ({ ...(prev ?? {}), avatar_url: e.target.value }))} placeholder="Avatar URL" />
+              <input className="bg-transparent border border-white/10 text-white p-2 rounded" value={modalPreacher?.avatar_url ?? ''} onChange={(e) => setModalPreacher((prev: any) => ({ ...(prev ?? {}), avatar_url: e.target.value }))} placeholder="Avatar URL" />
 
               <div className="flex items-center justify-end gap-2 mt-2">
                 {modalPreacher && (
