@@ -61,6 +61,12 @@ export async function middleware(req: NextRequest) {
     // no token: protect UI pages under /preachers, /timer, /sessions, /profile
     const protectedUI = ['/preachers', '/timer', '/sessions', '/profile'];
     if (protectedUI.some(p => req.nextUrl.pathname.startsWith(p))) {
+      // If this is an RSC (React Server Component) fetch, don't redirect —
+      // redirects break RSC client fetches (they fail with "Load failed").
+      const isRsc = req.headers.get('RSC') === '1' || req.headers.get('rsc') === '1';
+      if (isRsc) {
+        return NextResponse.next();
+      }
       const login = new URL('/login', req.url);
       return NextResponse.redirect(login);
     }
