@@ -32,6 +32,10 @@ export async function middleware(req: NextRequest) {
     if (req.nextUrl.pathname === '/api/admins/logout') {
       return NextResponse.next();
     }
+    // Allow login endpoint to pass through so users can obtain a new token
+    if (req.nextUrl.pathname === '/api/admins/login') {
+      return NextResponse.next();
+    }
     console.log('[middleware] cookie header:', req.headers.get('cookie'));
     if (token) {
       console.log('[middleware] admin_token present, prefix:', token.slice(0, 8));
