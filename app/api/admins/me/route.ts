@@ -4,7 +4,9 @@ import { requireAdmin } from '../../../../lib/adminAuth';
 
 export async function GET(req: Request) {
   // Return null admin for unauthenticated requests to avoid 401 noise in browser console.
+  console.log('[api/admins/me] headers:', Object.fromEntries((req as any).headers?.entries ? (req as any).headers.entries() : []));
   const payload = requireAdmin(req);
+  console.log('[api/admins/me] requireAdmin payload:', payload);
   const cacheHeaders = { 'Cache-Control': 'no-store' };
   if (!payload) return NextResponse.json({ admin: null }, { headers: cacheHeaders });
   try {

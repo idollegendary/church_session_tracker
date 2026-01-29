@@ -28,20 +28,26 @@ async function verifyJwtEdge(token: string) {
 export async function middleware(req: NextRequest) {
   try {
     const token = req.cookies.get('admin_token')?.value;
+    console.log('[middleware] cookie header:', req.headers.get('cookie'));
     if (token) {
+      console.log('[middleware] admin_token present, prefix:', token.slice(0, 8));
       // verify token in Edge runtime
       const payload = await verifyJwtEdge(token);
+      console.log('[middleware] verifyJwtEdge payload:', payload);
       if (!payload) {
         // invalid token: for API return 401, for UI redirect to login
         if (req.nextUrl.pathname.startsWith('/api')) {
+          console.log('[middleware] invalid token for API, returning 401');
           return new NextResponse(JSON.stringify({ error: 'unauthorized' }), { status: 401, headers: { 'Content-Type': 'application/json' } });
         }
         const login = new URL('/login', req.url);
+        console.log('[middleware] invalid token for UI, redirecting to /login');
         return NextResponse.redirect(login);
       }
       // attach authorization header for downstream Node handlers
       const headers = new Headers(req.headers);
       headers.set('authorization', `Bearer ${token}`);
+      console.log('[middleware] attaching authorization header for downstream');
       return NextResponse.next({ request: { headers } });
     }
     // no token: protect UI pages under /preachers, /timer, /sessions, /profile
