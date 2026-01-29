@@ -27,9 +27,23 @@ export default function LoginPage() {
       // cookie is set by server (httpOnly)
       // notify header and other components to refresh admin state
       window.dispatchEvent(new CustomEvent('admin:login'));
-      // use a full navigation to ensure the browser sends the newly-set httpOnly cookie
-      // (some SPA navigations may not include cookies consistently across environments)
-      window.location.assign('/timer');
+      // Poll /api/admins/me a few times to ensure the cookie is available to subsequent requests,
+      // then navigate to the profile page so the user sees their profile immediately.
+      async function waitForAdmin() {
+        for (let i = 0; i < 3; i++) {
+          try {
+            const r = await fetch('/api/admins/me', { credentials: 'include', cache: 'no-store' });
+            const j = await r.json().catch(() => ({}));
+            if (j?.admin) return true;
+          } catch (e) {
+            // ignore
+          }
+          await new Promise((res) => setTimeout(res, 250));
+        }
+        return false;
+      }
+      await waitForAdmin();
+      window.location.assign('/profile');
     } catch (err: any) {
       alert(err?.message ?? String(err));
     } finally {
