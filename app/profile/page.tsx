@@ -7,9 +7,9 @@ export default function ProfilePage() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    fetch('/api/admins/me', { credentials: 'include' })
-      .then((r) => r.json())
-      .then((j) => { if (j?.admin) setAdmin(j.admin); })
+    fetch('/api/admins/me', { credentials: 'include', cache: 'no-store' })
+      .then((r) => r.json().catch(() => ({})))
+      .then((j) => { if (j?.admin) setAdmin(j.admin); else setAdmin(null); })
       .catch(() => setAdmin(null));
   }, []);
 

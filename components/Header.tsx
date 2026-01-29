@@ -11,7 +11,7 @@ export default function Header() {
     let mounted = true;
     async function fetchAdmin() {
       try {
-        const r = await fetch('/api/admins/me', { credentials: 'include' });
+        const r = await fetch('/api/admins/me', { credentials: 'include', cache: 'no-store' });
         const j = await r.json().catch(() => ({}));
         if (!mounted) return;
         if (j?.admin) setAdmin(j.admin);
