@@ -28,6 +28,10 @@ async function verifyJwtEdge(token: string) {
 export async function middleware(req: NextRequest) {
   try {
     const token = req.cookies.get('admin_token')?.value;
+    // Allow logout endpoint to pass through without requiring a valid token
+    if (req.nextUrl.pathname === '/api/admins/logout') {
+      return NextResponse.next();
+    }
     console.log('[middleware] cookie header:', req.headers.get('cookie'));
     if (token) {
       console.log('[middleware] admin_token present, prefix:', token.slice(0, 8));
