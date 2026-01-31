@@ -73,29 +73,39 @@ export default function SessionsPage() {
           const preacherName = related?.name ?? (Array.isArray(related) ? related?.[0]?.name : null) ?? s?.preacher_name ?? s.preacher_id;
           const avatar = preacherFromList?.avatar_url ?? related?.avatar_url ?? (Array.isArray(related) ? related?.[0]?.avatar_url : null) ?? s?.preacher_avatar_url ?? null;
           return (
-            <li key={s.id} className="p-2 border border-white/6 rounded bg-transparent">
-              <div className="flex items-center gap-3">
-                {avatar ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={avatar} alt={preacherName ?? 'avatar'} className="w-10 h-10 rounded-full object-cover" />
-                ) : (() => {
-                  const initials = getInitials(preacherName);
-                  if (initials) return <div className="w-10 h-10 rounded-full bg-white/6 flex items-center justify-center text-sm font-semibold">{initials}</div>;
-                  return (
-                    <div className="w-10 h-10 rounded-full bg-white/6 flex items-center justify-center">
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6 text-white/60">
-                        <path d="M12 12c2.7 0 4.9-2.2 4.9-4.9S14.7 2.2 12 2.2 7.1 4.4 7.1 7.1 9.3 12 12 12zm0 2.4c-3.3 0-9.8 1.7-9.8 5v1.5c0 .4.3.8.8.8h18c.5 0 .8-.4.8-.8V19.4c0-3.3-6.5-5-9.8-5z" />
-                      </svg>
-                    </div>
-                  );
-                })()}
-                <div className="flex-1">
-                  <div className="font-medium text-white">{preacherName}</div>
-                  <div className="text-sm muted">Start: {dayjs(s.started_at).format('YYYY-MM-DD HH:mm:ss')}</div>
-                  <div className="text-sm muted">End: {s.ended_at ? dayjs(s.ended_at).format('YYYY-MM-DD HH:mm:ss') : 'running'}</div>
+            <li key={s.id} className="p-3 border border-white/6 rounded bg-transparent">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                <div className="flex-shrink-0">
+                  {avatar ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={avatar} alt={preacherName ?? 'avatar'} className="w-12 h-12 rounded-full object-cover" />
+                    ) : (() => {
+                    const initials = getInitials(preacherName);
+                    if (initials) return <div className="w-12 h-12 rounded-full bg-white/6 flex items-center justify-center text-sm font-semibold">{initials}</div>;
+                    return (
+                      <div className="w-12 h-12 rounded-full bg-white/6 flex items-center justify-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6 text-white/60">
+                          <path d="M12 12c2.7 0 4.9-2.2 4.9-4.9S14.7 2.2 12 2.2 7.1 4.4 7.1 7.1 9.3 12 12 12zm0 2.4c-3.3 0-9.8 1.7-9.8 5v1.5c0 .4.3.8.8.8h18c.5 0 .8-.4.8-.8V19.4c0-3.3-6.5-5-9.8-5z" />
+                        </svg>
+                      </div>
+                    );
+                  })()}
                 </div>
-                <div className="text-sm muted">Duration</div>
-                <div className="text-sm text-white font-mono">{s.duration ? formatSeconds(s.duration) : (s.started_at ? formatSeconds(elapsedSeconds(s)) : '-')}</div>
+
+                <div className="flex-1 min-w-0">
+                  <div className="font-medium text-white truncate">{preacherName}</div>
+                  <div className="mt-1 text-sm muted">
+                    <div className="text-xs text-white/80 font-medium">Start</div>
+                    <div className="truncate">{s.started_at ? dayjs(s.started_at).format('YYYY-MM-DD HH:mm:ss') : '-'}</div>
+                    <div className="mt-2 text-xs text-white/80 font-medium">Stop</div>
+                    <div className="truncate">{s.ended_at ? dayjs(s.ended_at).format('YYYY-MM-DD HH:mm:ss') : 'running'}</div>
+                  </div>
+                </div>
+
+                <div className="mt-3 sm:mt-0 sm:ml-4 flex flex-col items-start sm:items-end">
+                  <div className="text-xs muted">Total</div>
+                  <div className="text-sm text-white font-mono">{s.duration ? formatSeconds(s.duration) : (s.started_at ? formatSeconds(elapsedSeconds(s)) : '-')}</div>
+                </div>
               </div>
             </li>
           );

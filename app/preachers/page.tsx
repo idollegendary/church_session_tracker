@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { createSupabaseClient } from '../../lib/supabaseClient';
+import Modal from '../../components/Modal';
 
 export default function PreachersPage() {
   const [preachers, setPreachers] = useState<any[]>([]);
@@ -105,9 +106,8 @@ export default function PreachersPage() {
       </div>
 
       {modalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div className="absolute inset-0 bg-black/60" onClick={() => setModalOpen(false)} />
-          <div className="relative max-w-md w-full card-vhs p-4 rounded">
+        <Modal onClose={() => setModalOpen(false)}>
+          <div className="max-w-md w-full card-vhs p-4 rounded">
             <h3 className="font-semibold mb-2">{modalPreacher ? 'Edit preacher' : 'Create preacher'}</h3>
             <div className="flex flex-col gap-2">
               <div className="flex items-center gap-3">
@@ -148,7 +148,7 @@ export default function PreachersPage() {
               </div>
             </div>
           </div>
-        </div>
+        </Modal>
       )}
     </div>
   );
