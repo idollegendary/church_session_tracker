@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import dayjs from 'dayjs';
-import SessionsChart from './SessionsChart';
+// SessionsChart removed from timer view — moved elsewhere
 
 function elapsedSeconds(session: any) {
   if (!session?.started_at) return 0;
@@ -145,26 +145,40 @@ export default function SessionTimer() {
       </div>
 
       <div className="mb-4">
-        <div className="flex gap-2 items-center">
-          <select className="bg-transparent border border-white/10 text-white p-2 rounded disabled:opacity-50 disabled:cursor-not-allowed" value={selectedPreacher ?? ''} onChange={(e) => setSelectedPreacher(e.target.value)} disabled={!preachers.length || !!runningSession}>
+        <div className="flex flex-col sm:flex-row gap-2 items-stretch">
+          <select
+            className="bg-transparent border border-white/10 text-white p-2 rounded disabled:opacity-50 disabled:cursor-not-allowed w-full sm:w-auto"
+            value={selectedPreacher ?? ''}
+            onChange={(e) => setSelectedPreacher(e.target.value)}
+            disabled={!preachers.length || !!runningSession}
+          >
             {preachers.map((p) => (
               <option key={p.id} value={p.id}>{p.name}</option>
             ))}
           </select>
-          <button className="btn btn-primary" onClick={start} disabled={!!runningSession}>
-            Start
-          </button>
-          <button className="btn btn-danger" onClick={stop} disabled={!runningSession}>
-            Stop
-          </button>
+          <div className="flex gap-2 w-full sm:w-auto">
+            <button className="btn btn-primary w-full sm:w-auto py-3" onClick={start} disabled={!!runningSession}>
+              Start
+            </button>
+            <button className="btn btn-danger w-full sm:w-auto py-3" onClick={stop} disabled={!runningSession}>
+              Stop
+            </button>
+          </div>
         </div>
       </div>
       {runningSession ? (
         <div className="mb-4 p-3 rounded bg-white/6">
-          <div className="font-medium vhs-heading">Running — <span className="neon">LIVE</span></div>
-          <div className="text-sm muted">Preacher: {runningSession?.preachers?.name ?? runningSession?.preachers?.[0]?.name ?? runningSession?.preacher_id}</div>
-          <div className="text-sm muted">Started at: {dayjs(runningSession.started_at).format('YYYY-MM-DD HH:mm:ss')}</div>
-          <div className="text-sm text-white font-mono">Elapsed: {formatSeconds(elapsedSeconds(runningSession))}</div>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+            <div>
+              <div className="font-medium vhs-heading">Running — <span className="neon">LIVE</span></div>
+              <div className="text-sm muted">Preacher: {runningSession?.preachers?.name ?? runningSession?.preachers?.[0]?.name ?? runningSession?.preacher_id}</div>
+              <div className="text-sm muted">Started at: {dayjs(runningSession.started_at).format('YYYY-MM-DD HH:mm:ss')}</div>
+            </div>
+            <div className="text-center">
+              <div className="text-xl sm:text-2xl text-white font-mono font-semibold">{formatSeconds(elapsedSeconds(runningSession))}</div>
+              <div className="text-xs muted">Elapsed</div>
+            </div>
+          </div>
         </div>
       ) : null}
 
@@ -203,7 +217,7 @@ export default function SessionTimer() {
             })}
         </ul>
 
-        <SessionsChart sessions={sessions} />
+        {/* SessionsChart removed from timer page — render charts in analytics view instead */}
       </div>
     </div>
   );
