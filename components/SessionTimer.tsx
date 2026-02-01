@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from 'react';
+import Image from 'next/image';
 import Modal from './Modal';
 import dayjs from 'dayjs';
 // SessionsChart removed from timer view — moved elsewhere
@@ -288,8 +289,7 @@ export default function SessionTimer() {
                 <li key={s.id} className="p-2 border border-white/6 rounded bg-transparent">
                   <div className="flex items-center gap-3">
                     {avatar ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={avatar} alt={preacherName ?? 'avatar'} className="w-8 h-8 rounded-full object-cover" />
+                      <Image src={avatar} alt={preacherName ?? 'avatar'} width={32} height={32} className="w-8 h-8 rounded-full object-cover" />
                     ) : (() => {
                       const initials = getInitials(preacherName);
                       if (initials) return <div className="w-8 h-8 rounded-full bg-white/6 flex items-center justify-center text-sm font-semibold">{initials}</div>;

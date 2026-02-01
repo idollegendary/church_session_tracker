@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from 'react';
-import { createSupabaseClient } from '../../lib/supabaseClient';
+import Image from 'next/image';
 import Modal from '../../components/Modal';
 
 export default function PreachersPage() {
@@ -10,7 +10,6 @@ export default function PreachersPage() {
   const [loading, setLoading] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [modalPreacher, setModalPreacher] = useState<any | null>(null);
-  const supabase = createSupabaseClient();
 
   useEffect(() => {
     fetchList();
@@ -69,7 +68,7 @@ export default function PreachersPage() {
 
   function Avatar({ p }: { p: any }) {
     if (!p?.avatar_url) return <div className="w-12 h-12 bg-white/6 rounded-full flex items-center justify-center text-sm text-white">No</div>;
-    return <img src={p.avatar_url} alt="avatar" className="w-12 h-12 rounded-full object-cover" />;
+    return <Image src={p.avatar_url} alt="avatar" width={48} height={48} className="w-12 h-12 rounded-full object-cover" />;
   }
 
   function getInitials(name: any) {
@@ -95,8 +94,7 @@ export default function PreachersPage() {
         {preachers.map((p) => (
           <button key={p.id} onClick={() => { setModalPreacher(p); setModalOpen(true); }} className="group bg-transparent border border-white/6 rounded-md p-3 flex flex-col items-center gap-2 hover:shadow-lg transition-shadow">
               {p.avatar_url ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={p.avatar_url} alt={p.name} className="w-28 h-28 rounded-md object-cover" />
+              <Image src={p.avatar_url} alt={p.name} width={112} height={112} className="w-28 h-28 rounded-md object-cover" />
             ) : (
               <div className="w-28 h-28 rounded-md bg-white/6 flex items-center justify-center text-lg font-semibold">{getInitials(p.name ?? '?') ?? '?'}</div>
             )}
@@ -112,8 +110,7 @@ export default function PreachersPage() {
             <div className="flex flex-col gap-2">
               <div className="flex items-center gap-3">
                 {modalPreacher?.avatar_url ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={modalPreacher.avatar_url} alt="avatar" className="w-16 h-16 rounded-md object-cover" />
+                  <Image src={modalPreacher.avatar_url} alt="avatar" width={64} height={64} className="w-16 h-16 rounded-md object-cover" />
                 ) : (
                   <div className="w-16 h-16 rounded-md bg-white/6 flex items-center justify-center text-lg font-semibold">{getInitials(modalPreacher?.name ?? name ?? '?') ?? '?'}</div>
                 )}

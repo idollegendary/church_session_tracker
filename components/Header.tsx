@@ -1,6 +1,7 @@
 "use client";
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { useEffect, useState } from 'react';
 
 export default function Header() {
@@ -48,7 +49,7 @@ export default function Header() {
           <Link href="/sessions" className="px-3 py-1 rounded hover:bg-white/5">Sessions</Link>
           {admin ? (
             <Link href="/profile" className="flex items-center gap-2">
-              {admin.avatar_url ? <img src={admin.avatar_url} alt="avatar" className="w-6 h-6 rounded-full object-cover" /> : <span className="w-6 h-6 rounded-full bg-white/5 inline-block" />}
+              {admin.avatar_url ? <Image src={admin.avatar_url} alt="avatar" width={24} height={24} className="w-6 h-6 rounded-full object-cover" /> : <span className="w-6 h-6 rounded-full bg-white/5 inline-block" />}
               <span className="muted">{admin.display_name ?? admin.username}</span>
             </Link>
           ) : (
@@ -72,7 +73,7 @@ export default function Header() {
               <div className="border-t border-white/6 my-2" />
               {admin ? (
                 <Link href="/profile" className="flex items-center gap-2 px-2 py-1 rounded hover:bg-white/6" onClick={() => setMobileOpen(false)}>
-                  {admin.avatar_url ? <img src={admin.avatar_url} alt="avatar" className="w-6 h-6 rounded-full object-cover" /> : <span className="w-6 h-6 rounded-full bg-white/5 inline-block" />}
+                  {admin.avatar_url ? <Image src={admin.avatar_url} alt="avatar" width={24} height={24} className="w-6 h-6 rounded-full object-cover" /> : <span className="w-6 h-6 rounded-full bg-white/5 inline-block" />}
                   <span className="muted">{admin.display_name ?? admin.username}</span>
                 </Link>
               ) : (

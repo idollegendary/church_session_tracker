@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from 'react';
+import Image from 'next/image';
 
 export default function ProfilePage() {
   const [admin, setAdmin] = useState<any | null>(null);
@@ -33,7 +34,7 @@ export default function ProfilePage() {
     <div className="max-w-md mx-auto card-vhs p-6 rounded-lg mt-6 text-center">
       <div className="flex items-center flex-col gap-4">
         {admin.avatar_url ? (
-          <img src={admin.avatar_url} alt="avatar" className="w-24 h-24 rounded-full object-cover" />
+          <Image src={admin.avatar_url} alt="avatar" width={96} height={96} className="w-24 h-24 rounded-full object-cover" />
         ) : (
           <div className="w-24 h-24 rounded-full bg-white/6 flex items-center justify-center text-white">ADM</div>
         )}

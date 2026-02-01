@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useEffect, useState } from 'react';
-import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
+import React, { useEffect, useState, useCallback } from 'react';
+import Image from 'next/image';
+import dynamic from 'next/dynamic';
 import dayjs from 'dayjs';
 
 const PALETTE = ["#60a5fa","#34d399","#f59e0b","#f97316","#ef4444","#8b5cf6","#06b6d4","#ec4899"];
@@ -22,9 +23,7 @@ export default function StatisticsPage() {
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState<any[]>([]);
 
-  useEffect(() => { fetchStats(); }, [days, limit]);
-
-  async function fetchStats() {
+  const fetchStats = useCallback(async () => {
     setLoading(true);
     try {
       const res = await fetch(`/api/preachers/stats?days=${days}&limit=${limit}`, { credentials: 'include' });
@@ -40,7 +39,11 @@ export default function StatisticsPage() {
     } catch (err) {
       setData([]);
     } finally { setLoading(false); }
-  }
+  }, [days, limit]);
+
+  useEffect(() => { fetchStats(); }, [fetchStats]);
+
+  const PreachersPie = dynamic(() => import('../../components/PreachersPie'), { ssr: false, loading: () => <div style={{height:280}} className="flex items-center justify-center">Loading chart...</div> });
 
   return (
     <div className="max-w-4xl mx-auto card-vhs p-4 rounded-lg mt-6">
@@ -63,24 +66,7 @@ export default function StatisticsPage() {
       </div>
 
       <div style={{ height: 280 }} className="mb-4 relative">
-        <ResponsiveContainer width="100%" height="100%">
-          <PieChart>
-            <Pie
-              data={data.map((d) => ({ name: d.name, value: d.total_seconds }))}
-              dataKey="value"
-              nameKey="name"
-              innerRadius={70}
-              outerRadius={110}
-              paddingAngle={4}
-              labelLine={false}
-            >
-              {data.map((entry, index) => (
-                <Cell key={`cell-${index}`} fill={PALETTE[index % PALETTE.length]} />
-              ))}
-            </Pie>
-            <Tooltip formatter={(v: any) => formatDuration(v)} />
-          </PieChart>
-        </ResponsiveContainer>
+        <PreachersPie data={data} />
 
         <div className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 text-center pointer-events-none">
           <div className="text-sm muted">Total</div>
@@ -101,7 +87,7 @@ export default function StatisticsPage() {
                 return (
                   <li key={i} className="p-3 bg-transparent border border-white/6 rounded flex items-center gap-3">
                     <div className="w-3 h-3 rounded-sm" style={{ background: PALETTE[i % PALETTE.length] }} />
-                    {r.avatar_url ? <img src={r.avatar_url} className="w-10 h-10 rounded-full object-cover" alt={r.name} /> : <div className="w-10 h-10 rounded-full bg-white/6 flex items-center justify-center">{(r.name||'')[0]}</div>}
+                    {r.avatar_url ? <Image src={r.avatar_url} className="w-10 h-10 rounded-full object-cover" alt={r.name} width={40} height={40} /> : <div className="w-10 h-10 rounded-full bg-white/6 flex items-center justify-center">{(r.name||'')[0]}</div>}
                     <div className="flex-1 min-w-0">
                       <div className="font-medium truncate">{r.name}</div>
                       <div className="text-sm muted">{r.session_count} sessions • {formatDuration(value)}</div>

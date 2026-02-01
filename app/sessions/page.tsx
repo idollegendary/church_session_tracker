@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
+import Image from 'next/image';
 import dayjs from 'dayjs';
 
 function formatSeconds(sec: number) {
@@ -36,14 +37,7 @@ export default function SessionsPage() {
   const perPage = 10;
   const [total, setTotal] = useState<number>(0);
 
-  useEffect(() => {
-    (async () => {
-      await fetchPreachers();
-      await fetchSessions(1);
-    })();
-  }, []);
-
-  async function fetchPreachers() {
+  const fetchPreachersCb = useCallback(async () => {
     try {
       const res = await fetch('/api/preachers', { credentials: 'include' });
       const json = await res.json();
@@ -52,9 +46,9 @@ export default function SessionsPage() {
     } catch (e) {
       setPreachers([]);
     }
-  }
+  }, []);
 
-  async function fetchSessions(p: number = page) {
+  const fetchSessions = useCallback(async function (p: number = 1) {
     try {
       const res = await fetch(`/api/sessions?page=${p}&per_page=${perPage}`, { credentials: 'include' });
       const json = await res.json();
@@ -65,7 +59,16 @@ export default function SessionsPage() {
     } catch (err) {
       setSessions([]);
     }
-  }
+  }, [perPage]);
+
+  useEffect(() => {
+    (async () => {
+      await fetchPreachersCb();
+      await fetchSessions(1);
+    })();
+  }, [fetchPreachersCb, fetchSessions]);
+
+  // fetchPreachers and fetchSessions are defined above as callbacks
 
   return (
     <div className="max-w-3xl mx-auto card-vhs p-6 rounded-lg mt-6">
@@ -82,8 +85,7 @@ export default function SessionsPage() {
               <div className="flex flex-col sm:flex-row sm:items-center gap-3">
                 <div className="flex-shrink-0">
                   {avatar ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={avatar} alt={preacherName ?? 'avatar'} className="w-12 h-12 rounded-full object-cover" />
+                    <Image src={avatar} alt={preacherName ?? 'avatar'} width={48} height={48} className="w-12 h-12 rounded-full object-cover" />
                     ) : (() => {
                     const initials = getInitials(preacherName);
                     if (initials) return <div className="w-12 h-12 rounded-full bg-white/6 flex items-center justify-center text-sm font-semibold">{initials}</div>;
