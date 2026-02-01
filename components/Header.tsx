@@ -44,6 +44,7 @@ export default function Header() {
         <nav className="hidden sm:flex gap-4 items-center text-sm">
           <Link href="/timer" className="px-3 py-1 rounded hover:bg-white/5">Timer</Link>
           <Link href="/preachers" className="px-3 py-1 rounded hover:bg-white/5">Preachers</Link>
+          <Link href="/stats" className="px-3 py-1 rounded hover:bg-white/5">Statistics</Link>
           <Link href="/sessions" className="px-3 py-1 rounded hover:bg-white/5">Sessions</Link>
           {admin ? (
             <Link href="/profile" className="flex items-center gap-2">
@@ -66,6 +67,7 @@ export default function Header() {
             <div className="absolute right-0 mt-2 w-56 bg-black/80 border border-white/6 rounded shadow-md p-2 z-20">
               <Link href="/timer" className="block px-2 py-1 rounded hover:bg-white/6" onClick={() => setMobileOpen(false)}>Timer</Link>
               <Link href="/preachers" className="block px-2 py-1 rounded hover:bg-white/6" onClick={() => setMobileOpen(false)}>Preachers</Link>
+              <Link href="/stats" className="block px-2 py-1 rounded hover:bg-white/6" onClick={() => setMobileOpen(false)}>Statistics</Link>
               <Link href="/sessions" className="block px-2 py-1 rounded hover:bg-white/6" onClick={() => setMobileOpen(false)}>Sessions</Link>
               <div className="border-t border-white/6 my-2" />
               {admin ? (
