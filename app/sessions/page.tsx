@@ -32,11 +32,14 @@ function getInitials(name: any) {
 export default function SessionsPage() {
   const [sessions, setSessions] = useState<any[]>([]);
   const [preachers, setPreachers] = useState<any[]>([]);
+  const [page, setPage] = useState<number>(1);
+  const perPage = 10;
+  const [total, setTotal] = useState<number>(0);
 
   useEffect(() => {
     (async () => {
       await fetchPreachers();
-      await fetchSessions();
+      await fetchSessions(1);
     })();
   }, []);
 
@@ -51,12 +54,14 @@ export default function SessionsPage() {
     }
   }
 
-  async function fetchSessions() {
+  async function fetchSessions(p: number = page) {
     try {
-      const res = await fetch('/api/sessions', { credentials: 'include' });
+      const res = await fetch(`/api/sessions?page=${p}&per_page=${perPage}`, { credentials: 'include' });
       const json = await res.json();
       if (!res.ok) return setSessions([]);
       setSessions(json.sessions ?? []);
+      setTotal(json.total ?? 0);
+      setPage(p);
     } catch (err) {
       setSessions([]);
     }
@@ -111,6 +116,13 @@ export default function SessionsPage() {
           );
         })}
       </ul>
+      <div className="mt-4 flex items-center justify-between">
+        <div className="text-sm muted">Showing {(page - 1) * perPage + 1} - {Math.min(total, page * perPage)} of {total}</div>
+        <div className="flex gap-2">
+          <button className="btn btn-sm btn-ghost" onClick={() => { if (page > 1) fetchSessions(page - 1); }} disabled={page <= 1}>Prev</button>
+          <button className="btn btn-sm btn-ghost" onClick={() => { const max = Math.max(1, Math.ceil(total / perPage)); if (page < max) fetchSessions(page + 1); }} disabled={page >= Math.max(1, Math.ceil(total / perPage))}>Next</button>
+        </div>
+      </div>
     </div>
   );
 }

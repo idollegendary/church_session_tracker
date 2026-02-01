@@ -9,18 +9,38 @@ export async function GET(req: Request) {
     const url = new URL(req.url);
     const user_id = url.searchParams.get('user_id');
     const running = url.searchParams.get('running');
+    const pageParam = parseInt(url.searchParams.get('page') || '1', 10) || 1;
+    const perPage = parseInt(url.searchParams.get('per_page') || '10', 10) || 10;
+    const page = Math.max(1, pageParam);
+    const start = (page - 1) * perPage;
+    const end = start + perPage - 1;
 
     const supabase = getServerSupabase();
     if (!supabase) return NextResponse.json({ error: 'Supabase not configured' }, { status: 500 });
 
-    let q = supabase.from('sessions').select('id, user_id, preacher_id, started_at, ended_at, duration, preachers(name)').order('started_at', { ascending: false });
-    // If client provided a specific user_id filter, apply it. Otherwise return recent sessions (server will be protected by admin cookie).
-    if (user_id) q = q.eq('user_id', user_id);
-    if (running === 'true') q = q.is('ended_at', null);
+    // base query with relation
+    const base = supabase.from('sessions');
+    // count query (applies same filters)
+    let countQuery = base.select('id', { count: 'exact', head: false });
 
-    const { data, error } = await q;
+    // main query builder
+    let q = base.select('id, user_id, preacher_id, started_at, ended_at, duration, preachers(name)').order('started_at', { ascending: false }).range(start, end);
+    // If client provided a specific user_id filter, apply it. Otherwise return recent sessions (server will be protected by admin cookie).
+    if (user_id) {
+      countQuery = countQuery.eq('user_id', user_id);
+      q = q.eq('user_id', user_id);
+    }
+    if (running === 'true') {
+      countQuery = countQuery.is('ended_at', null);
+      q = q.is('ended_at', null);
+    }
+
+    const [{ data: dataList, error }, { count }] = await Promise.all([
+      q,
+      countQuery
+    ]);
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-    return NextResponse.json({ sessions: data ?? [] });
+    return NextResponse.json({ sessions: dataList ?? [], total: count ?? 0, page, per_page: perPage });
   } catch (err: any) {
     return NextResponse.json({ error: err.message ?? String(err) }, { status: 500 });
   }
@@ -69,6 +89,54 @@ export async function POST(req: Request) {
         .single();
       if (error) return NextResponse.json({ error: error.message }, { status: 500 });
       return NextResponse.json({ session: data });
+    }
+
+    if (action === 'create') {
+      const { user_id, preacher_id, started_at, ended_at } = body;
+      const uid = user_id ?? (admin as any)?.sub ?? null;
+      if (!uid || !preacher_id || !started_at) return NextResponse.json({ error: 'user_id, preacher_id and started_at required' }, { status: 400 });
+      const ended = ended_at ?? null;
+      const duration = ended ? Math.floor((new Date(ended).getTime() - new Date(started_at).getTime()) / 1000) : null;
+      const { data, error } = await supabase
+        .from('sessions')
+        .insert({ user_id: uid, preacher_id, started_at, ended_at: ended, duration })
+        .select('id, user_id, preacher_id, started_at, ended_at, duration, preachers(name)')
+        .single();
+      if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+      return NextResponse.json({ session: data });
+    }
+
+    if (action === 'update') {
+      const { session_id, preacher_id, started_at, ended_at } = body;
+      if (!session_id) return NextResponse.json({ error: 'session_id required' }, { status: 400 });
+      const updates: any = {};
+      if (preacher_id) updates.preacher_id = preacher_id;
+      if (started_at) updates.started_at = started_at;
+      if (ended_at !== undefined) {
+        updates.ended_at = ended_at ?? null;
+        if (started_at || updates.started_at || updates.started_at === undefined) {
+          const { data: existing } = await supabase.from('sessions').select('started_at').eq('id', session_id).single();
+          const start = (started_at ?? existing?.started_at) ?? null;
+          if (start && ended_at) updates.duration = Math.floor((new Date(ended_at).getTime() - new Date(start).getTime()) / 1000);
+          if (start && !ended_at) updates.duration = null;
+        }
+      }
+      const { data, error } = await supabase
+        .from('sessions')
+        .update(updates)
+        .eq('id', session_id)
+        .select('id, user_id, preacher_id, started_at, ended_at, duration, preachers(name)')
+        .single();
+      if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+      return NextResponse.json({ session: data });
+    }
+
+    if (action === 'delete') {
+      const { session_id } = body;
+      if (!session_id) return NextResponse.json({ error: 'session_id required' }, { status: 400 });
+      const { error } = await supabase.from('sessions').delete().eq('id', session_id);
+      if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+      return NextResponse.json({ ok: true });
     }
 
     return NextResponse.json({ error: 'unknown action' }, { status: 400 });

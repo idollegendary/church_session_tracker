@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from 'react';
+import Modal from './Modal';
 import dayjs from 'dayjs';
 // SessionsChart removed from timer view — moved elsewhere
 
@@ -32,6 +33,9 @@ function getInitials(name: any) {
 export default function SessionTimer() {
   const [runningSession, setRunningSession] = useState<any>(null);
   const [sessions, setSessions] = useState<any[]>([]);
+  const [page, setPage] = useState<number>(1);
+  const perPage = 10;
+  const [total, setTotal] = useState<number>(0);
   const [preachers, setPreachers] = useState<any[]>([]);
   const [selectedPreacher, setSelectedPreacher] = useState<string | null>(null);
   useEffect(() => {
@@ -74,8 +78,9 @@ export default function SessionTimer() {
       setRunningSession(data.session);
       // ensure selected preacher matches started session
       if (data.session?.preacher_id) setSelectedPreacher(data.session.preacher_id);
-      // fetch sessions only after we've started tracking
-      await fetchSessions();
+      // refresh paginated list (keep current page) and separately refresh running session
+      await fetchSessions(page);
+      await fetchRunningSession();
     } catch (err: any) {
       alert(err.message ?? String(err));
     }
@@ -93,21 +98,21 @@ export default function SessionTimer() {
       const data = await res.json();
       if (!res.ok) return alert(data?.error || 'Failed to stop session');
       setRunningSession(null);
-      await fetchSessions();
+      await fetchSessions(page);
+      await fetchRunningSession();
     } catch (err: any) {
       alert(err.message ?? String(err));
     }
   }
 
-  async function fetchSessions() {
+  async function fetchSessions(p: number = page) {
     try {
-      const res = await fetch(`/api/sessions`, { credentials: 'include' });
+      const res = await fetch(`/api/sessions?page=${p}&per_page=${perPage}`, { credentials: 'include' });
       const json = await res.json();
       if (!res.ok) return setSessions([]);
       const mine = (json.sessions ?? []).sort((a: any, b: any) => (new Date(b.started_at).getTime() - new Date(a.started_at).getTime()));
       setSessions(mine);
-      const running = mine.find((s: any) => !s.ended_at);
-      setRunningSession(running ?? null);
+      setTotal(json.total ?? 0);
     } catch (err) {
       setSessions([]);
     }
@@ -115,7 +120,7 @@ export default function SessionTimer() {
 
   async function fetchRunningSession() {
     try {
-      const res = await fetch(`/api/sessions?running=true`, { credentials: 'include' });
+      const res = await fetch(`/api/sessions?running=true&page=1&per_page=1`, { credentials: 'include' });
       const json = await res.json();
       if (!res.ok) return setRunningSession(null);
       const r = (json.sessions ?? [])[0] ?? null;
@@ -135,6 +140,74 @@ export default function SessionTimer() {
       if ((json.preachers ?? []).length && !selectedPreacher) setSelectedPreacher(json.preachers[0].id);
     } catch (err) {
       setPreachers([]);
+    }
+  }
+
+  // CRUD helpers: modal-based create/update, and delete
+  const [modalOpen, setModalOpen] = useState(false);
+  const [modalSession, setModalSession] = useState<any | null>(null);
+  const [modalPreacherId, setModalPreacherId] = useState<string | null>(null);
+  const [modalStart, setModalStart] = useState<string>('');
+  const [modalEnd, setModalEnd] = useState<string>('');
+
+  function openCreateModal() {
+    setModalSession(null);
+    setModalPreacherId(preachers.length ? preachers[0].id : null);
+    setModalStart('');
+    setModalEnd('');
+    setModalOpen(true);
+  }
+
+  function openEditModal(session: any) {
+    setModalSession(session);
+    setModalPreacherId(String(session.preacher_id ?? ''));
+    setModalStart(session.started_at ? dayjs(session.started_at).format('YYYY-MM-DDTHH:mm') : '');
+    setModalEnd(session.ended_at ? dayjs(session.ended_at).format('YYYY-MM-DDTHH:mm') : '');
+    setModalOpen(true);
+  }
+
+  async function handleDelete(sessionId: string) {
+    if (!confirm('Delete this session?')) return;
+    try {
+      const res = await fetch('/api/sessions', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'delete', session_id: sessionId })
+      });
+      const json = await res.json();
+      if (!res.ok) return alert(json?.error || 'Failed to delete');
+      await fetchSessions(page);
+      await fetchRunningSession();
+    } catch (err: any) {
+      alert(err.message ?? String(err));
+    }
+  }
+
+  async function handleSaveModal(e?: any) {
+    if (e) e.preventDefault();
+    if (!modalPreacherId || !modalStart) return alert('Preacher and start required');
+    try {
+      if (modalSession?.id) {
+        // update
+        const payload: any = { action: 'update', session_id: modalSession.id };
+        if (modalPreacherId) payload.preacher_id = modalPreacherId;
+        if (modalStart) payload.started_at = new Date(modalStart).toISOString();
+        if (modalEnd === '') payload.ended_at = undefined; else payload.ended_at = modalEnd ? new Date(modalEnd).toISOString() : null;
+        const res = await fetch('/api/sessions', { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+        const json = await res.json();
+        if (!res.ok) return alert(json?.error || 'Failed to update');
+      } else {
+        // create
+        const res = await fetch('/api/sessions', { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'create', preacher_id: modalPreacherId, started_at: new Date(modalStart).toISOString(), ended_at: modalEnd ? new Date(modalEnd).toISOString() : null }) });
+        const json = await res.json();
+        if (!res.ok) return alert(json?.error || 'Failed to create');
+      }
+      setModalOpen(false);
+      await fetchSessions(page);
+      await fetchRunningSession();
+    } catch (err: any) {
+      alert(err.message ?? String(err));
     }
   }
 
@@ -163,9 +236,31 @@ export default function SessionTimer() {
             <button className="btn btn-danger w-full sm:w-auto py-3" onClick={stop} disabled={!runningSession}>
               Stop
             </button>
+            <button className="btn btn-accent w-full sm:w-auto py-3" onClick={openCreateModal}>
+              Create
+            </button>
           </div>
         </div>
       </div>
+      {modalOpen && (
+        <Modal onClose={() => setModalOpen(false)}>
+          <div className="max-w-md w-full card-vhs p-4 rounded">
+            <h3 className="font-semibold mb-2">{modalSession?.id ? 'Edit session' : 'Create session'}</h3>
+            <form onSubmit={handleSaveModal} className="flex flex-col gap-2">
+              <select className="bg-transparent border border-white/10 text-white p-2 rounded" value={modalPreacherId ?? ''} onChange={(e) => setModalPreacherId(e.target.value)}>
+                {preachers.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+              </select>
+              <input className="bg-transparent border border-white/10 text-white p-2 rounded" type="datetime-local" value={modalStart} onChange={(e) => setModalStart(e.target.value)} />
+              <input className="bg-transparent border border-white/10 text-white p-2 rounded" type="datetime-local" value={modalEnd} onChange={(e) => setModalEnd(e.target.value)} />
+              <div className="flex items-center justify-end gap-2 mt-2">
+                {modalSession?.id && <button type="button" className="btn btn-sm btn-danger" onClick={async () => { await handleDelete(modalSession.id); setModalOpen(false); }}>Delete</button>}
+                <button type="button" className="btn btn-sm btn-ghost" onClick={() => setModalOpen(false)}>Cancel</button>
+                <button type="submit" className="btn btn-sm btn-primary">Save</button>
+              </div>
+            </form>
+          </div>
+        </Modal>
+      )}
       {runningSession ? (
         <div className="mb-4 p-3 rounded bg-white/6">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
@@ -212,12 +307,47 @@ export default function SessionTimer() {
                     </div>
                   </div>
                   <div className="text-sm text-white mt-1 font-mono">{s.duration ? formatSeconds(s.duration) : (s.started_at ? formatSeconds(elapsedSeconds(s)) : '')}</div>
+                <div className="mt-2 flex gap-2">
+                  <button className="btn btn-sm btn-ghost" onClick={() => openEditModal(s)}>Edit</button>
+                  <button className="btn btn-sm btn-danger" onClick={() => handleDelete(s.id)}>Delete</button>
+                </div>
                 </li>
               );
             })}
         </ul>
-
         {/* SessionsChart removed from timer page — render charts in analytics view instead */}
+        <div className="mt-4 flex items-center justify-between">
+          <div className="text-sm muted">Showing {(page - 1) * perPage + 1} - {Math.min(total, page * perPage)} of {total}</div>
+          <div className="flex gap-2">
+            <button
+              className="btn btn-sm btn-ghost"
+              onClick={() => {
+                if (page > 1) {
+                  const np = page - 1;
+                  setPage(np);
+                  fetchSessions(np);
+                }
+              }}
+              disabled={page <= 1}
+            >
+              Prev
+            </button>
+            <button
+              className="btn btn-sm btn-ghost"
+              onClick={() => {
+                const max = Math.max(1, Math.ceil(total / perPage));
+                if (page < max) {
+                  const np = page + 1;
+                  setPage(np);
+                  fetchSessions(np);
+                }
+              }}
+              disabled={page >= Math.max(1, Math.ceil(total / perPage))}
+            >
+              Next
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );
